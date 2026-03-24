@@ -1,0 +1,33 @@
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class SceneLoader : MonoBehaviour
+{
+    public string sceneNameTrigger;
+        
+        /// <summary>
+        /// Loads a scene by name.
+        /// </summary>
+        /// <param name="sceneName">Name of the scene to load</param>
+        public void OpenScene(string sceneName)
+        {
+            if (string.IsNullOrEmpty(sceneName))
+            {
+                Debug.LogWarning("Scene name is null or empty. Cannot load scene.");
+                return;
+            }
+
+            if (Application.CanStreamedLevelBeLoaded(sceneName))
+            {
+                SceneManager.LoadScene(sceneName);
+            }
+            else
+            {
+                Debug.LogError($"Scene '{sceneName}' not found in build settings!");
+            }
+        }
+        public void OnTriggerEnter(Collider other)
+        {
+            OpenScene(sceneNameTrigger);
+        }
+}
