@@ -126,6 +126,8 @@ public class CharacterInput : MonoBehaviour
     }
     private void Start()
     {
+        StartControlling();
+        Time.timeScale = originalTimeScale;
         UpdateEnergyText();
     }
     private void Awake()
