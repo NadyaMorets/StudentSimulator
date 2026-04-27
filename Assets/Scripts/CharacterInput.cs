@@ -64,6 +64,10 @@ public class CharacterInput : MonoBehaviour
     [Header("UI")]
     [SerializeField]
     private TextMeshProUGUI energyText;
+    [SerializeField]
+    private TextMeshProUGUI reputationText;
+    [SerializeField]
+    private TextMeshProUGUI moodText;
 
     [Space]
     [SerializeField]
@@ -126,9 +130,19 @@ public class CharacterInput : MonoBehaviour
     }
     private void Start()
     {
+        if (GameManager.Instance != null)
+        {
+            stats.EnergyPercent = GameManager.Instance.CurrentEnergy;
+            GameManager.Instance.OnEnergyChanged += OnEnergyChanged;
+            GameManager.Instance.OnReputationChanged += OnReputationChanged;
+            GameManager.Instance.OnMoodChanged += OnMoodChanged;
+        }
+
+        UpdateEnergyText();
+        UpdateReputationText();
+        UpdateMoodText();
         StartControlling();
         Time.timeScale = originalTimeScale;
-        UpdateEnergyText();
     }
     private void Awake()
     {
@@ -157,6 +171,17 @@ public class CharacterInput : MonoBehaviour
             phoneCanvas.SetActive(false);
         }
     }
+
+    private void OnDestroy()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnEnergyChanged -= OnEnergyChanged;
+            GameManager.Instance.OnReputationChanged -= OnReputationChanged;
+            GameManager.Instance.OnMoodChanged -= OnMoodChanged;
+        }
+    }
+
     private void OnDisable()
     {
         phoneAction.action.performed -= OnPhonePerformed;
@@ -235,6 +260,11 @@ public class CharacterInput : MonoBehaviour
             energyText.text = $"{stats.EnergyPercent:F0}";
         }
     }
+    private void OnEnergyChanged(float newEnergy)
+    {
+        stats.EnergyPercent = newEnergy;
+        UpdateEnergyText();
+    }
     private void TryInteractWithCurrentHit()
     {
         if (_currentHit.collider != null)
@@ -263,15 +293,19 @@ public class CharacterInput : MonoBehaviour
                 {
                     float energyAmount = energyItem.stats.EnergyPercent;
 
-                    stats.EnergyPercent += energyAmount;
-
-                    if (stats.EnergyPercent > 100)
-                        stats.EnergyPercent = 100;
-                    UpdateEnergyText();
+                    if (GameManager.Instance != null)
+                    {
+                        GameManager.Instance.AddEnergy(energyAmount);
+                    }
+                    else
+                    {
+                        stats.EnergyPercent += energyAmount;
+                        if (stats.EnergyPercent > 100)
+                            stats.EnergyPercent = 100;
+                        UpdateEnergyText();
+                    }
 
                     Destroy(hitObject);
-
-                    Debug.Log($"Energy added! +{energyAmount} energy. Current energy: {stats.EnergyPercent}");
                 }
             }
             else
@@ -405,5 +439,28 @@ public class CharacterInput : MonoBehaviour
             return outline;
 
         return null;
+    }
+    private void UpdateReputationText()
+    {
+        if (reputationText != null && GameManager.Instance != null)
+            reputationText.text = $"{GameManager.Instance.CurrentReputation:F0}";
+    }
+
+    private void UpdateMoodText()
+    {
+        if (moodText != null && GameManager.Instance != null)
+            moodText.text = $"{GameManager.Instance.CurrentMood:F0}";
+    }
+
+    private void OnReputationChanged(float newReputation) => UpdateReputationText();
+    private void OnMoodChanged(float newMood) => UpdateMoodText();
+    public void ResetInputState()
+    {
+        _movementDirection = Vector3.zero;
+        _localMovementAccelerationVector = Vector3.zero;
+        _velocity = Vector3.zero;
+        _resultMovementDirection = Vector3.zero;
+
+        _sprintState = false;
     }
 }
